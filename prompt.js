@@ -2,7 +2,6 @@
 const inquirer = require('inquirer');
 const {whitelist} = require('./whitelist');
 const {countWhitelisted, fail} = require('./utils');
-const {program} = require('./index');
 
 function addError(input) {
     const {errors, total} = input;
@@ -54,15 +53,21 @@ function removeErrors(errors) {
         });
 }
 
-function patternMatch(errors) {
-    const rx = new RegExp(program.pattern);
+function patternMatch(input, pattern) {
+    const {errors, total} = input;
+    if (!errors.length) {
+        console.log(`✓ No errors!${countWhitelisted(errors, total)}`);
+        process.exit(0);
+    }
+    const rx = new RegExp(pattern);
     const matching = errors.filter(i => rx.test(i));
+    console.log(matching.join('\n'));
 
     return inquirer
         .prompt([{
             type: 'confirm',
             name: 'confirm',
-            message: `Add ${matching.length} errors matching /${program.pattern}/ to the whitelist?`
+            message: `Add ${matching.length} errors matching /${pattern}/ to the whitelist?`
         }])
         .then(({confirm}) => {
             if (confirm) {

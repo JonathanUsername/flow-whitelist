@@ -32,12 +32,10 @@ npm.load({}, (err) => {
     } else if (program.add) {
         flow.check().then(parseOutput).then(prompt.addError);
     } else if (program.pattern) {
-        flow.check().then(parseOutput).then(prompt.patternMatch);
+        flow.check().then(parseOutput).then((errors) => {
+            prompt.patternMatch(errors, program.pattern);
+        });
     } else {
         flow.check().then(parseOutput).then(checkIfFailure).catch(fail);
     }
 });
-
-module.exports = {
-    program
-};

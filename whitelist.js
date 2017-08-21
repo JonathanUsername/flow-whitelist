@@ -1,7 +1,7 @@
+// @flow
 /* global module */
 const fs = require('fs');
 const path = require('path');
-
 
 const DIR_OF_SCRIPT = __dirname;
 const WHITELIST_FILE = path.join(DIR_OF_SCRIPT, './.flow-error-whitelist.json');
