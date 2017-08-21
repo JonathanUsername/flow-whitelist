@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /* @noflow */
-/* global module */
 
 const program = require('commander');
 const npm = require('npm');
@@ -16,6 +15,7 @@ program
     .option('-a --add', 'Add rules to whitelist')
     .option('-r --remove', 'Remove rules from whitelist')
     .option('-g --global', 'Use global Flow')
+    .option('-j --json', 'Use JSON output')
     .option('-p --pattern [regex]', 'Add all matching errors to whitelist')
     .parse(process.argv);
 
@@ -24,18 +24,23 @@ npm.load({}, (err) => {
         return process.stderr.write(err);
     }
 
+
     const prefix = npm.prefix;
     const flow = new FlowProcess(prefix);
 
-    if (program.remove) {
+    if (program.args[0] === 'coverage') {
+        flow._run(process.argv.slice(2)).then(console.log);
+    } else if (program.remove) {
         prompt.removeErrors(whitelist.errors);
     } else if (program.add) {
-        flow.check().then(parseOutput).then(prompt.addError);
+        flow.json().then(parseOutput).then(prompt.addError);
+    } else if (program.json) {
+        flow.json().then(parseOutput).then(i => i.errors).then(console.log).catch(fail);
     } else if (program.pattern) {
-        flow.check().then(parseOutput).then((errors) => {
+        flow.json().then(parseOutput).then((errors) => {
             prompt.patternMatch(errors, program.pattern);
         });
     } else {
-        flow.check().then(parseOutput).then(checkIfFailure).catch(fail);
+        flow.json().then(parseOutput).then(checkIfFailure).catch(fail);
     }
 });

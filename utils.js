@@ -14,24 +14,34 @@ const findLineBreaksInColouredOutput = (str) =>
         }, ['']);
 
 const isFlowError = (str) => !!str && !/(Found [\d]+ error)|(No errors)/.test(str);
-const isNotWhitelisted = (str) => !whitelist.errors.includes(str);
+const isNotWhitelisted = (obj) => !whitelist.errors.includes(JSON.stringify(obj));
 const countWhitelisted = (errs, total) => errs ? ` (${total.length - errs.length} suppressed by whitelist)` : '';
 const countErrors = (errs, total) => `Found ${errs.length} error${errs.length > 1 ? 's' : ''}${countWhitelisted(errs, total)}`;
 
-const parseOutput = (allErrorsStr) => {
-    const allErrors = findLineBreaksInColouredOutput(allErrorsStr)
-        .filter(isFlowError);
+const parseOutput = ({errors}) => {
+    errors = errors.filter(i => i.level === 'error'); // Ignore warnings
 
-    const errorsNotInWhitelist = allErrors
+    const errorsNotInWhitelist = errors
         .filter(isNotWhitelisted);
 
     return {
-        allErrorsStr,
-        total: allErrors,
-        countStr: countErrors(errorsNotInWhitelist, allErrors),
+        total: errors,
+        countStr: countErrors(errorsNotInWhitelist, errors),
         errors: errorsNotInWhitelist
     };
 };
+
+
+function errorsToChoices(errors) {
+    return errors.map(e => {
+        const name = formatJson(e);
+        return {
+            name,
+            value: e,
+            short: name
+        };
+    });
+}
 
 const fail = (message) => {
     console.error(message);
@@ -41,12 +51,22 @@ const fail = (message) => {
 const checkIfFailure = (input) => {
     const {errors, countStr, total} = input;
     if (errors.length) {
-        fail(`${errors}\n✘ ${countStr}`);
+        const errsStr = errors.map(formatJson).join('\n');
+        fail(`${errsStr}\n✘ ${countStr}`);
     } else {
         console.log(`✓ No errors!${countWhitelisted(errors, total)}`);
         process.exit(0);
     }
 };
+
+function formatMessage(msg) {
+    return `${msg.descr || ''}`;
+}
+
+function formatJson(obj) {
+    const paths = [...new Set(obj.message.map(i => i.path).filter(Boolean))];
+    return `${obj.message.map(formatMessage).join(' ')}\n${paths.join('\n')}\n\n`;
+}
 
 module.exports = {
     findLineBreaksInColouredOutput,
@@ -56,5 +76,7 @@ module.exports = {
     countErrors,
     parseOutput,
     fail,
-    checkIfFailure
+    checkIfFailure,
+    formatJson,
+    errorsToChoices
 };

@@ -1,7 +1,7 @@
 /* global module */
 const inquirer = require('inquirer');
 const {whitelist} = require('./whitelist');
-const {countWhitelisted, fail} = require('./utils');
+const {countWhitelisted, fail, errorsToChoices, formatJson} = require('./utils');
 
 function addError(input) {
     const {errors, total} = input;
@@ -17,7 +17,7 @@ function addError(input) {
             value: 'data',
             message: 'Choose an error to add to the whitelist',
             pageSize: 100,
-            choices: errors
+            choices: errorsToChoices(errors)
         }])
         .then(({flowError}) => {
             whitelist.add(flowError);
@@ -42,7 +42,7 @@ function removeErrors(errors) {
             value: 'data',
             message: 'Choose an error to remove from whitelist',
             pageSize: 100,
-            choices: errors
+            choices: errorsToChoices(errors)
         }])
         .then(({flowError}) => {
             const index = errors.findIndex(i => i === flowError);
@@ -61,7 +61,7 @@ function patternMatch(input, pattern) {
     }
     const rx = new RegExp(pattern);
     const matching = errors.filter(i => rx.test(i));
-    console.log(matching.join('\n'));
+    console.log(matching.map(formatJson).join('\n'));
 
     return inquirer
         .prompt([{

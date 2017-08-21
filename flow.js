@@ -29,7 +29,10 @@ class FlowProcess {
         }).catch(fail);
     }
     json() {
-        // TODO: for IDEs etc. we'll have to store the whitelist of json
+        return this._run(['--json', '--show-all-errors']).then(str => {
+            const json = JSON.parse(str);
+            return json;
+        });
     }
     check() {
         return this._run(['--color', 'always', '--show-all-errors']);
